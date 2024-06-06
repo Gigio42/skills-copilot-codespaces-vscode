@@ -1,44 +1,38 @@
-// Create Web Server 
-const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const path = require('path');
+// Create web server
 
-// Connect to MongoDB
-const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/comments', { useNewUrlParser: true });
+// Import modules
+var http = require('http');
+var fs = require('fs');
+var url = require('url');
 
-// Schema for MongoDB
-const commentSchema = new mongoose.Schema({
-  username: String,
-  body: String,
-  date: Date,
-});
+// Create server
+http.createServer(function(req, res) {
+    // Parse the request containing file name
+    var pathname = url.parse(req.url).pathname;
 
-const Comment = mongoose.model('Comment', commentSchema);
+    // Print the name of the file for which request is made
+    console.log("Request for " + pathname + " received.");
 
-app.use(express.static(path.join(__dirname, 'build')));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors());
+    // Read the requested file content from file system
+    fs.readFile(pathname.substr(1), function(err, data) {
+        if(err) {
+            console.log(err);
+            // HTTP Status: 404 : NOT FOUND
+            // Content Type: text/plain
+            res.writeHead(404, {'Content-Type': 'text/html'});
+        } else {
+            // Page found
+            // HTTP Status: 200 : OK
+            // Content Type: text/plain
+            res.writeHead(200, {'Content-Type': 'text/html'});
 
-// Get comments from MongoDB
-app.get('/api/comments', (req, res) => {
-  Comment.find({}, (err, comments) => {
-    res.send(comments);
-  });
-});
+            // Write the content of the file to response body
+            res.write(data.toString());
+        }
+        // Send the response body
+        res.end();
+    });
+}).listen(8080);
 
-// Post comments to MongoDB
-app.post('/api/comments', (req, res) => {
-  const comment = new Comment(req.body);
-  comment.save((err, comment) => {
-    res.send(comment);
-  });
-});
-
-// Start server
-app.listen(8080, () => {
-  console.log('Server started on http://localhost:8080');
-});
+// Console will print the message
+console.log('Server running at http://
